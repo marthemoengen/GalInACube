@@ -1,0 +1,37 @@
+import fabric.functions as fn
+import logging
+
+udf = fn.UserDataFunctions()
+
+@udf.connection(argName="sqlDB", alias="AdventureWorksLT")
+@udf.function()
+
+# Take a list price and productID as input parameters and update the list price for that ProductID in the SQL database
+def update_list_price(sqlDB: fn.FabricSqlConnection, ListPrice: float, productId: int) -> str:
+
+    logging.info('Python UDF trigger function processed a request.') 
+
+    data = (ListPrice,productId)
+ 
+    # Establish a connection to the SQL database
+    connection = sqlDB.connect()
+    cursor = connection.cursor()    
+ 
+    logging.info(f"Updating ListPrice for ProductId {productId}...")
+
+    # Update the ListPrice for the given ProductId
+    update_query = """
+    UPDATE [SalesLT].[Product]
+    SET ListPrice = ?
+    WHERE ProductId = ?;
+    """
+    data = (ListPrice, productId)
+    cursor.execute(update_query, data)
+ 
+    # Commit the transaction
+    connection.commit()
+ 
+    # Close the connection
+    cursor.close()
+    connection.close()               
+    return "New price was successfully added"
